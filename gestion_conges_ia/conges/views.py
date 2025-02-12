@@ -117,25 +117,39 @@ class RegisterApi(APIView):
 
 
 class AddEmployeeView(CreateAPIView):
-    # permission_classes = [IsAuthenticated]  # Supprimé
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [TokenAuthentication]  # Authentification via Token
     queryset = Employe.objects.all()
     serializer_class = EmployeSerializer
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-
-        if not user.is_authenticated:
+        # Récupérer le token depuis l'en-tête Authorization
+        auth_header = request.headers.get('Authorization')
+        
+        if not auth_header or not auth_header.startswith("Token "):
             return Response({
                 'status': 401,
-                'message': 'Vous devez être connecté pour créer un employé.',
+                'message': 'Token non fourni ou format invalide.',
             }, status=status.HTTP_401_UNAUTHORIZED)
 
-        request.data['user'] = user.id
+        token_key = auth_header.split(" ")[1]  # Extraire la clé du token
 
-        serializer = self.get_serializer(data=request.data)
+        try:
+            token = Token.objects.get(key=token_key)
+            user = token.user  # Récupérer l'utilisateur lié au token
+        except Token.DoesNotExist:
+            return Response({
+                'status': 401,
+                'message': 'Token invalide.',
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Ajouter l'utilisateur authentifié aux données reçues
+        data = request.data.copy()
+        data['user'] = user.id  # Associer le user
+
+        serializer = self.get_serializer(data=data)
+
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=user)
             return Response({
                 'status': 201,
                 'message': 'Employé créé avec succès.',
@@ -147,7 +161,6 @@ class AddEmployeeView(CreateAPIView):
             'message': 'Les données envoyées sont invalides.',
             'errors': serializer.errors,
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 #update empolyee
 
