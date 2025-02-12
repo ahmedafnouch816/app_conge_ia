@@ -6,14 +6,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email','password','first_name','last_name','role']
+        extra_kwargs = {
+            'role': {'required': True}
+        }
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
     
     
-class VerifyAccountSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp = serializers.CharField()
-
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
@@ -33,8 +32,17 @@ class EmployeSerializer(serializers.ModelSerializer):
             'solde_de_conge': {'required': True}
         }
 
-
-
-
-
 #####################
+
+class DemandeCongeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DemandeConge
+        fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut']
+
+
+
+
+
+#class VerifyAccountSerializer(serializers.Serializer):
+#    email = serializers.EmailField()
+#    otp = serializers.CharField()

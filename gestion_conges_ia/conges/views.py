@@ -1,7 +1,7 @@
 from rest_framework.views import APIView 
 from rest_framework.generics import RetrieveUpdateAPIView,CreateAPIView
 from rest_framework.response import Response
-from .serializers import   EmployeSerializer, User,UserSerializer,LoginSerializer
+from .serializers import   DemandeCongeSerializer, EmployeSerializer, User,UserSerializer,LoginSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
@@ -110,12 +110,9 @@ class RegisterApi(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            
+##################################################################################          
 
 #partie employee
-
-
-
 class AddEmployeeView(CreateAPIView):
     authentication_classes = [TokenAuthentication]  # Authentification via Token
     queryset = Employe.objects.all()
@@ -162,10 +159,8 @@ class AddEmployeeView(CreateAPIView):
             'errors': serializer.errors,
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
 #update empolyee
-
-
-
 class UpdateEmployeeView(RetrieveUpdateAPIView):
     authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
@@ -228,7 +223,7 @@ class UpdateEmployeeView(RetrieveUpdateAPIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
+# delete employee
 class DeleteEmployeeView(DestroyAPIView):
     authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
@@ -256,7 +251,7 @@ class DeleteEmployeeView(DestroyAPIView):
 
         
         
-        
+# liste employee     
 class EmployeeDetailView(RetrieveAPIView):
     authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
@@ -266,4 +261,164 @@ class EmployeeDetailView(RetrieveAPIView):
         """ Retrieve the employee instance by ID """
         return self.get_queryset().get(id=self.kwargs['pk'])
 
-#################
+##################################################################################
+
+class AddDemandeCongeView(APIView):
+    authentication_classes = [TokenAuthentication]
+    #permission_classes = [IsAuthenticated]  # Seuls les utilisateurs authentifiés peuvent créer une demande
+
+    def post(self, request):
+        try:
+            employe = Employe.objects.get(user=request.user)  # Récupérer l'employé lié à l'utilisateur
+
+            data = request.data.copy()
+            data['employe'] = employe.id  # Associer l'employé à la demande
+
+            serializer = DemandeCongeSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'status': 201,
+                    'message': 'Demande de congé soumise avec succès.',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response({
+                'status': 400,
+                'message': 'Données invalides.',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Employe.DoesNotExist:
+            return Response({
+                'status': 403,
+                'message': 'Vous n\'êtes pas un employé autorisé à soumettre une demande de congé.'
+            }, status=status.HTTP_403_FORBIDDEN)
+            
+
+
+class UpdateDemandeCongeView(APIView):
+    authentication_classes = [TokenAuthentication]
+    #permission_classes = [IsAuthenticated]  # Ensuring only authenticated users can update requests
+
+    def get_object(self, pk):
+        try:
+            return DemandeConge.objects.get(id=pk)
+        except DemandeConge.DoesNotExist:
+            return None
+
+    def put(self, request, pk):
+        """ Handle the PUT request to update an existing leave request """
+        demande_conge = self.get_object(pk)
+        if not demande_conge:
+            return Response({
+                'status': 404,
+                'message': 'Demande de congé non trouvée.',
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if the authenticated user is the one who created the leave request
+        if demande_conge.employe.user != request.user:
+            return Response({
+                'status': 403,
+                'message': 'Vous ne pouvez pas modifier cette demande de congé.',
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Prepare the fields to be updated (you can restrict updates to specific fields)
+        updated_data = {
+            "date_debut": request.data.get("date_debut", demande_conge.date_debut),
+            "date_fin": request.data.get("date_fin", demande_conge.date_fin),
+            "type_conge": request.data.get("type_conge", demande_conge.type_conge),
+            "statut": request.data.get("statut", demande_conge.statut),
+        }
+
+        # Validate and update only those fields
+        serializer = DemandeCongeSerializer(demande_conge, data=updated_data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'status': 200,
+                'message': 'Demande de congé mise à jour avec succès.',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'status': 400,
+            'message': 'Données invalides.',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+class DeleteDemandeCongeView(APIView):
+    authentication_classes = [TokenAuthentication]  # Authentication via Token
+    #permission_classes = [IsAuthenticated]  # Only authenticated users can delete
+
+    def get_object(self, pk):
+        """ Retrieve the DemandeConge instance by ID """
+        try:
+            return DemandeConge.objects.get(id=pk)
+        except DemandeConge.DoesNotExist:
+            return None
+
+    def delete(self, request, pk):
+        """ Handle the DELETE request to remove a leave request """
+        demande_conge = self.get_object(pk)
+        
+        if not demande_conge:
+            return Response({
+                'status': 404,
+                'message': 'Demande de congé non trouvée.',
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the authenticated user is the one who created the leave request
+        if demande_conge.employe.user != request.user:
+            return Response({
+                'status': 403,
+                'message': 'Vous ne pouvez pas supprimer cette demande de congé.',
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Delete the leave request
+        demande_conge.delete()
+        return Response({
+            'status': 200,
+            'message': 'Demande de congé supprimée avec succès.',
+        }, status=status.HTTP_200_OK)
+        
+        
+class DemandeCongeDetailView(APIView):
+    authentication_classes = [TokenAuthentication]  # Authentication via Token
+    #permission_classes = [IsAuthenticated]  # Only authenticated users can access the details
+
+    def get_object(self, pk):
+        """ Retrieve the DemandeConge instance by ID """
+        try:
+            return DemandeConge.objects.get(id=pk)
+        except DemandeConge.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        """ Handle the GET request to retrieve a specific leave request details """
+        demande_conge = self.get_object(pk)
+
+        if not demande_conge:
+            return Response({
+                'status': 404,
+                'message': 'Demande de congé non trouvée.',
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the authenticated user is the one who created the leave request
+        if demande_conge.employe.user != request.user:
+            return Response({
+                'status': 403,
+                'message': 'Vous ne pouvez pas accéder à cette demande de congé.',
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Serialize the leave request data
+        serializer = DemandeCongeSerializer(demande_conge)
+
+        return Response({
+            'status': 200,
+            'message': 'Détails de la demande de congé récupérés avec succès.',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)

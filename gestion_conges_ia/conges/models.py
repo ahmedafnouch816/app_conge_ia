@@ -51,24 +51,8 @@ class Employe(models.Model):
         return f"{self.user.get_full_name()} - {self.poste}"
 
 
-
-# Responsable model    
-class Responsable(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profil_responsable")
-    nom = models.CharField(max_length=100, primary_key=True)  # or any other unique field
-    prenom = models.CharField(max_length=100)
-    def approuver_demande(self, demande):
-        demande.statut = "approuve"
-        demande.save()
-
-    def consulter_recommandation(self, demande):
-        return demande.recommandations.all()
-
-    def __str__(self):
-        return self.user.get_full_name()
-
-
 # DemandeDeCongé model
+
 class DemandeConge(models.Model):
     STATUT_CHOICES = [
         ('en_attente', 'En attente'),
@@ -76,11 +60,19 @@ class DemandeConge(models.Model):
         ('rejete', 'Rejeté'),
     ]
 
-    employe = models.ForeignKey(Employe, on_delete=models.CASCADE, related_name="demandes")
-    responsable = models.ForeignKey(Responsable, on_delete=models.CASCADE)
+    TYPE_CONGE_CHOICES = [
+        ('maternite', 'Congé de maternité'),
+        ('maladie', 'Congé de maladie'),
+        ('paye', 'Congé payé'),
+        ('paternite', 'Congé de paternité'),
+        ('occasionnel', 'Congé occasionnel'),
+    ]
+    
+    employe = models.ForeignKey('Employe', on_delete=models.CASCADE, related_name="demandes")
+    #responsable = models.ForeignKey('Responsable', on_delete=models.CASCADE)
     date_debut = models.DateField()
     date_fin = models.DateField()
-    motif = models.TextField()
+    type_conge = models.CharField(max_length=20, choices=TYPE_CONGE_CHOICES)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
 
     def valider(self):
@@ -92,8 +84,7 @@ class DemandeConge(models.Model):
         self.save()
 
     def __str__(self):
-        return f"{self.employe} - {self.date_debut} à {self.date_fin}"
-
+        return f"{self.employe} - {self.date_debut} à {self.date_fin} ({dict(self.TYPE_CONGE_CHOICES).get(self.type_conge)})"
 
 
 # Recommandation model
@@ -125,3 +116,20 @@ class SystemeIA(models.Model):
     def donner_recommandation(self, demande):
         # Generate a recommendation based on demande details
         pass
+
+
+
+# Responsable model    
+#class Responsable(models.Model):
+#    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profil_responsable")
+#    nom = models.CharField(max_length=100, primary_key=True)  # or any other unique field
+#    prenom = models.CharField(max_length=100)
+#    def approuver_demande(self, demande):
+#        demande.statut = "approuve"
+#        demande.save()
+#
+#    def consulter_recommandation(self, demande):
+#        return demande.recommandations.all()
+#
+#    def __str__(self):
+#        return self.user.get_full_name()
