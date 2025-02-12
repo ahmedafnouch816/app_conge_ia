@@ -167,6 +167,7 @@ class AddEmployeeView(CreateAPIView):
 
 
 class UpdateEmployeeView(RetrieveUpdateAPIView):
+    authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
     serializer_class = EmployeSerializer
 
@@ -176,6 +177,13 @@ class UpdateEmployeeView(RetrieveUpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         """ Handle the PUT request to update the employee """
+        # Vérifier l'authentification
+        if not request.user.is_authenticated:
+            return Response({
+                'status': 401,
+                'message': 'Authentification requise.',
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
         employee = self.get_object()
         serializer = self.serializer_class(employee, data=request.data, partial=False)
 
@@ -195,6 +203,13 @@ class UpdateEmployeeView(RetrieveUpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         """ Partially update the employee (fields like name, email, etc.) """
+        # Vérifier l'authentification
+        if not request.user.is_authenticated:
+            return Response({
+                'status': 401,
+                'message': 'Authentification requise.',
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
         employee = self.get_object()
         serializer = self.serializer_class(employee, data=request.data, partial=True)
 
@@ -215,6 +230,7 @@ class UpdateEmployeeView(RetrieveUpdateAPIView):
 
 
 class DeleteEmployeeView(DestroyAPIView):
+    authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
     serializer_class = EmployeSerializer
 
@@ -224,21 +240,30 @@ class DeleteEmployeeView(DestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         """ Handle the DELETE request to remove the employee """
+        # Vérifier l'authentification
+        if not request.user.is_authenticated:
+            return Response({
+                'status': 401,
+                'message': 'Authentification requise.',
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
         employee = self.get_object()
         employee.delete()
         return Response({
             'status': 200,
             'message': 'Employee deleted successfully',
         }, status=status.HTTP_200_OK)
+
         
         
         
 class EmployeeDetailView(RetrieveAPIView):
+    authentication_classes = [TokenAuthentication]  # Authentification par token
     queryset = Employe.objects.all()
     serializer_class = EmployeSerializer
 
     def get_object(self):
         """ Retrieve the employee instance by ID """
         return self.get_queryset().get(id=self.kwargs['pk'])
-    
+
 #################
