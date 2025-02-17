@@ -17,9 +17,7 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
     
-    
-# partie empolyee
-        
+
 # serializers.py
 from rest_framework import serializers
 from .models import Employe

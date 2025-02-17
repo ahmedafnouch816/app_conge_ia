@@ -1,6 +1,12 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from .ml_utils import MODEL_PATH
 from .manager import UserManager
+
+# SystèmeIA 
+import numpy as np
 
 
     
@@ -74,6 +80,7 @@ class DemandeConge(models.Model):
     date_fin = models.DateField()
     type_conge = models.CharField(max_length=20, choices=TYPE_CONGE_CHOICES)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    #employe = models.OneToOneField('SystemeIA', on_delete=models.CASCADE, related_name="employe")
 
     def valider(self):
         self.statut = "approuve"
@@ -105,17 +112,17 @@ class Recommandation(models.Model):
 
 
 
-# SystèmeIA model
-class SystemeIA(models.Model):
-    historique_demandes = models.ManyToManyField(DemandeConge, related_name="systeme_ia_histories")
 
-    def analyser_charge_travail(self):
-        # Analyze workload based on historique_demandes
-        pass
+class EmployeeWorkloadFile(models.Model):
+    """
+    Modèle pour stocker les fichiers Excel uploadés.
+    """
+    file = models.FileField(upload_to='workload_files/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    def donner_recommandation(self, demande):
-        # Generate a recommendation based on demande details
-        pass
+    def __str__(self):
+        return f"Workload file uploaded at {self.uploaded_at}"
+
 
 
 
@@ -133,3 +140,31 @@ class SystemeIA(models.Model):
 #
 #    def __str__(self):
 #        return self.user.get_full_name()
+
+
+
+#class SystemeIA(models.Model):
+#    historique_demandes = models.ManyToManyField(DemandeConge, related_name="systeme_ia_histories")
+#
+#    def predire_charge_travail(self, annee, periode_analyse):
+#        """
+#        Prédit la charge de travail en fonction de l'année et de la période.
+#        """
+#        MODEL_PATH = os.path.join(settings.BASE_DIR, "workload_model.pkl")
+#
+#        if not os.path.exists(MODEL_PATH):
+#            print("Erreur : Modèle non trouvé !")
+#            return None  
+#
+#        try:
+#            with open(MODEL_PATH, 'rb') as f:
+#                model = pickle.load(f)
+#
+#            X_input = np.array([[annee, periode_analyse]])
+#            prediction = model.predict(X_input)[0]  
+#            print(f"Charge prédite : {prediction}")  # Debug
+#            return prediction
+#
+#        except Exception as e:
+#            print(f"Erreur lors de la prédiction : {str(e)}")
+#            return None

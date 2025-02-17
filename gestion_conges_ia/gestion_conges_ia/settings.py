@@ -104,7 +104,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Default primary key field type
@@ -115,8 +116,32 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
+  #  'DEFAULT_PERMISSION_CLASSES': [
+  #      'rest_framework.permissions.IsAuthenticated',  # 🔒 Toutes les vues nécessitent un utilisateur authentifié
+  #  ],
 }
+
+
+#REST_FRAMEWORK = {
+#    'DEFAULT_AUTHENTICATION_CLASSES': [
+#        'rest_framework.authentication.TokenAuthentication',  # 🔑 Pour les API avec tokens
+#        'rest_framework.authentication.SessionAuthentication',  # 🌍 Pour l'admin Django et le frontend
+#    ],
+#    'DEFAULT_PERMISSION_CLASSES': [
+#        'rest_framework.permissions.IsAuthenticated',
+#    ],
+#}
+#
 
 
 AUTH_USER_MODEL = 'conges.User'
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ahmedbnmohamed6@gmail.com'
+EMAIL_HOST_PASSWORD = 'hkez rbns qroe lpez'
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+FRONTEND_URL = 'http://127.0.0.1:8000'  # Update this with your frontend URL
