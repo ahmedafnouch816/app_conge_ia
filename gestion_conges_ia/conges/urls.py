@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, GetRecommandationView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, RegisterApi,AddEmployeeView, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
+from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, EmployeListAPIView, GetRecommandationView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, RegisterApi,AddEmployeeView, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
 #from rest_framework_simplejwt import views as jwt_views  # Ajout de cet import
 
 
@@ -15,7 +15,8 @@ urlpatterns = [
     path('api/employees/update/<int:pk>/', UpdateEmployeeView.as_view(), name='update_employee'),
     path('api/employees/delete/<int:pk>/', DeleteEmployeeView.as_view(), name='delete_employee'),
     path('api/employees/details/<int:pk>/', EmployeeDetailView.as_view(), name='employee_details'),
-    
+    path('api/employes/', EmployeListAPIView.as_view(), name='employe-list'),
+
     # api de demande de conge 
     
     path('api/demande-conge/add/', AddDemandeCongeView.as_view(), name='add-demande-conge'),
