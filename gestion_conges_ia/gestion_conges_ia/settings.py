@@ -152,4 +152,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "ahmedbnmohamed6@gmail.com"
 EMAIL_HOST_PASSWORD = "hkez rbns qroe lpez"
 DEFAULT_FROM_EMAIL = "your-email@gmail.com"
-FRONTEND_URL = "http://127.0.0.1:8000"  # Update this with your frontend URL
+#FRONTEND_URL = "http://127.0.0.1:8000"  # use pour backend 
+FRONTEND_URL = "http://localhost:3000"  # use pour frontend
+

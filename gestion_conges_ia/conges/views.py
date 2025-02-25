@@ -203,6 +203,32 @@ class PasswordResetConfirmView(APIView):
         )
 
 
+
+class ProfileApi(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def get(self, request):
+        try:
+            # Get the authenticated user
+            user = request.user
+
+            # Serialize the user data
+            serializer = UserSerializer(user)
+
+            return Response(
+                {
+                    "status": 200,
+                    "message": "User profile retrieved successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"status": 500, "message": "Something went wrong", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 ##################################################################################
 
 
@@ -655,17 +681,29 @@ class AddDemandeCongeView(APIView):
 
     def post(self, request):
         try:
-            # Étape 1: Récupérer l'employé
-            employe = Employe.objects.get(user=request.user)
+            user = request.user  # Get authenticated user
+
+            # Step 1: Check if Employe exists, and do not create if it already exists
+            try:
+                employe = Employe.objects.get(user=user)
+            except Employe.DoesNotExist:
+                employe = None
+
+            if employe is None:
+                return Response(
+                    {"status": 400, "message": "Employé non trouvé."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             data = request.data.copy()
             data["employe"] = employe.id
 
-            # Étape 2: Valider les données
+            # Step 2: Validate the leave request
             serializer = DemandeCongeSerializer(data=data)
             if serializer.is_valid():
                 demande = serializer.save()
 
-                # Étape 3: Prédire la charge de travail
+                # Step 3: Predict workload impact
                 annee = demande.date_debut.year
                 periode = demande.date_debut.month
 
@@ -676,7 +714,7 @@ class AddDemandeCongeView(APIView):
                         {"error": statut_recommande}, status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Étape 4: Sauvegarder la recommandation
+                # Step 4: Save recommendation
                 Recommandation.objects.create(
                     demande=demande, score=prediction, statut=statut_recommande
                 )
@@ -701,12 +739,37 @@ class AddDemandeCongeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except Employe.DoesNotExist:
+        except Exception as e:
             return Response(
-                {"status": 403, "message": "Employé non autorisé."},
-                status=status.HTTP_403_FORBIDDEN,
+                {"status": 500, "message": "Erreur interne.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+class ListDemandeCongeView(APIView):
+    authentication_classes = [TokenAuthentication]  # Ensure the user is authenticated
+
+    def get(self, request):
+        try:
+            # Fetch all leave requests (DemandeConge) from the database
+            demandes_conge = DemandeConge.objects.all()
+
+            # Serialize the data to return
+            serializer = DemandeCongeSerializer(demandes_conge, many=True)
+
+            return Response(
+                {
+                    "status": 200,
+                    "message": "Liste des demandes de congé récupérée avec succès.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"status": 500, "message": "Erreur interne.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 # end pont de recuperes data de recommendations
 class GetRecommandationView(APIView):

@@ -5,7 +5,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['email','password','first_name','last_name','role']
+        fields = ['id','email','password','first_name','last_name','role']
         extra_kwargs = {
             'role': {'required': True}
         }
@@ -25,7 +25,7 @@ from .models import Employe
 class EmployeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employe
-        fields = ['nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
+        fields = ['id','nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
         extra_kwargs = {
             'solde_de_conge': {'required': True}
         }
