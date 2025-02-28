@@ -9,6 +9,7 @@ from .manager import UserManager
 import numpy as np
 
 
+
     
 class User(AbstractUser):
     username = None

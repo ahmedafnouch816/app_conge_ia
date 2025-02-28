@@ -45,6 +45,8 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_decode
 
 from rest_framework import generics
+from rest_framework.serializers import ModelSerializer
+from django.db import transaction, IntegrityError
 
 
 something_went_wrong = ("something went wrong",)
@@ -106,47 +108,87 @@ class LoginApi(CreateAPIView):
                 {"status": 500, "message": "Something went wrong", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-
 class RegisterApi(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
         try:
-            data = request.data
-            serializer = self.serializer_class(data=data)
+            serializer = self.serializer_class(data=request.data)
 
             if serializer.is_valid():
-                serializer.save()
+                user = serializer.save()
+
                 return Response(
                     {
                         "status": 200,
-                        "message": "Registration successful, check your email.",
-                        "data": serializer.data,
+                        "message": "Inscription réussie.",
+                        "data": {
+                            "user": serializer.data,
+                            "employe": EmployeSerializer(user.profil_employe).data  # Get related Employe data
+                        },
                     },
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_201_CREATED,  # Use 201 for resource creation
                 )
 
             return Response(
                 {
                     "status": 400,
-                    "message": "Something went wrong.",
-                    "data": serializer.errors,
+                    "message": "Erreur lors de l'inscription.",
+                    "errors": serializer.errors,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         except Exception as e:
-            # Log the exception or handle it
             return Response(
                 {
                     "status": 500,
-                    "message": "An error occurred while processing your request.",
+                    "message": "Une erreur est survenue.",
                     "error": str(e),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
+#class RegisterApi(APIView):
+#    serializer_class = UserSerializer
+#
+#    def post(self, request):
+#        try:
+#            data = request.data
+#            serializer = self.serializer_class(data=data)
+#
+#            if serializer.is_valid():
+#                serializer.save()
+#                return Response(
+#                    {
+#                        "status": 200,
+#                        "message": "Registration successful, check your email.",
+#                        "data": serializer.data,
+#                    },
+#                    status=status.HTTP_200_OK,
+#                )
+#
+#            return Response(
+#                {
+#                    "status": 400,
+#                    "message": "Something went wrong.",
+#                    "data": serializer.errors,
+#                },
+#                status=status.HTTP_400_BAD_REQUEST,
+#            )
+#
+#        except Exception as e:
+#            # Log the exception or handle it
+#            return Response(
+#                {
+#                    "status": 500,
+#                    "message": "An error occurred while processing your request.",
+#                    "error": str(e),
+#                },
+#                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#            )
+#
 
 # rest password
 class PasswordResetRequestView(APIView):
