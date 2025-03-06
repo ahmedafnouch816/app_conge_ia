@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "conges",  # Ensure this matches the actual app name
+    'chatbot',
     "rest_framework",
     "rest_framework.authtoken",
     'corsheaders',
