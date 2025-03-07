@@ -26,7 +26,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 import pickle
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from .models import EmployeeWorkloadFile
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -692,6 +692,7 @@ def predict_workload(annee, periode):
 
 
 # API pour soumettre une demande de congé avec prédiction de charge de travail
+
 class AddDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]
 
@@ -710,17 +711,20 @@ class AddDemandeCongeView(APIView):
                 # Étape 3: Prédire la charge de travail
                 annee = demande.date_debut.year
                 periode = demande.date_debut.month
-
                 prediction, statut_recommande = predict_workload(annee, periode)
 
                 if prediction is None:
                     return Response(
-                        {"error": statut_recommande}, status=status.HTTP_400_BAD_REQUEST
+                        {"error": statut_recommande}, 
+                        status=status.HTTP_400_BAD_REQUEST
                     )
 
                 # Étape 4: Sauvegarder la recommandation
                 Recommandation.objects.create(
-                    demande=demande, score=prediction, statut=statut_recommande
+                    demande=demande, 
+                    employe=employe,  # Added this line to fix the error
+                    score=prediction, 
+                    statut=statut_recommande
                 )
 
                 return Response(
@@ -779,3 +783,91 @@ class GetRecommandationView(APIView):
                 {"error": "Aucune recommandation trouvée pour cette demande."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+
+
+class GetRecommandationsByEmployeView(APIView):
+    authentication_classes = [TokenAuthentication]
+
+    def get(self, request, employe_id):
+        """Récupérer toutes les recommandations pour un employé donné."""
+        employe = get_object_or_404(Employe, id=employe_id)
+
+        # Récupérer toutes les recommandations liées aux demandes de congé de cet employé
+        recommandations = Recommandation.objects.filter(demande__employe=employe).select_related("demande")
+
+        if not recommandations.exists():
+            return Response(
+                {
+                    "message": "Aucune recommandation trouvée pour cet employé.",
+                    "nombre_demandes": 0,
+                    "recommandations": []
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Organiser les recommandations par demande de congé
+        recommandations_data = {}
+        for recommandation in recommandations:
+            demande_id = recommandation.demande.id
+            if demande_id not in recommandations_data:
+                recommandations_data[demande_id] = {
+                    "demande": {
+                        "id": recommandation.demande.id,
+                        "date_debut": recommandation.demande.date_debut,
+                        "date_fin": recommandation.demande.date_fin,
+                        "type_conge": recommandation.demande.type_conge,
+                        "statut": recommandation.demande.statut,
+                    },
+                    "recommandations": []
+                }
+            recommandations_data[demande_id]["recommandations"].append({
+                "score": recommandation.score,
+                "statut": recommandation.statut,
+            })
+
+        return Response(
+            {
+                "message": "Recommandations récupérées avec succès.",
+                "nombre_demandes": len(recommandations_data),
+                "recommandations": list(recommandations_data.values()),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+class DemandesCongeParEmployeView(APIView):
+    authentication_classes = [TokenAuthentication]
+    #permission_classes = [IsAuthenticated]
+
+    def get(self, request, employe_id):
+        """Récupérer toutes les demandes de congé d'un employé spécifique"""
+        try:
+            employe = Employe.objects.get(id=employe_id)
+        except Employe.DoesNotExist:
+            return Response(
+                {"status": 404, "message": "Employé non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Vérifier si l'utilisateur connecté est bien l'employé en question
+        if request.user != employe.user:
+            return Response(
+                {"status": 403, "message": "Accès refusé."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        demandes = DemandeConge.objects.filter(employe=employe)
+        serializer = DemandeCongeSerializer(demandes, many=True)
+
+        return Response(
+            {
+                "status": 200,
+                "message": "Liste des demandes de congé récupérée avec succès.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
