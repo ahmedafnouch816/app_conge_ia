@@ -82,6 +82,7 @@ class DemandeConge(models.Model):
     type_conge = models.CharField(max_length=20, choices=TYPE_CONGE_CHOICES)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
     #employe = models.OneToOneField('SystemeIA', on_delete=models.CASCADE, related_name="employe")
+    file = models.FileField(upload_to='certificat/', blank=True, null=True)
 
     def valider(self):
         self.statut = "approuve"
