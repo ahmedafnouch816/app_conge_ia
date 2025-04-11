@@ -597,9 +597,13 @@ class DemandeCongeDetailView(APIView):
 
 ###################################################################################
 # Fonction pour charger les données depuis un fichier Excel
+
+# Fonction pour charger les données depuis un fichier Excel
 def load_data(filepath):
     data = pd.read_excel(filepath)
-    required_columns = ["Période_analyse", "solde_restant", "Charge_de_travail"]
+    required_columns = [
+        "Période_analyse", "Solde_restant_de_conges", "Charge_de_travail", "priorite_de_conge", "Taux_d_absenteisme"
+    ]
 
     if not all(col in data.columns for col in required_columns):
         raise ValueError(
@@ -612,22 +616,13 @@ def load_data(filepath):
         )
 
     months_map = {
-        "Janvier": 1,
-        "Février": 2,
-        "Mars": 3,
-        "Avril": 4,
-        "Mai": 5,
-        "Juin": 6,
-        "Juillet": 7,
-        "Août": 8,
-        "Septembre": 9,
-        "Octobre": 10,
-        "Novembre": 11,
-        "Décembre": 12,
+        "Janvier": 1, "Février": 2, "Mars": 3, "Avril": 4, "Mai": 5, "Juin": 6,
+        "Juillet": 7, "Août": 8, "Septembre": 9, "Octobre": 10, "Novembre": 11, "Décembre": 12,
     }
 
     data["Période_analyse"] = data["Période_analyse"].map(months_map)
     return data
+
 
 
 # Fonction pour entraîner le modèle et sauvegarder le fichier
@@ -644,7 +639,8 @@ def train_workload_model():
     except Exception as e:
         return None, f"Erreur lors de la lecture du fichier : {str(e)}"
 
-    X = data[["solde_restant", "Période_analyse"]]
+    # Ajouter les nouvelles caractéristiques (features)
+    X = data[["Solde_restant_de_conges", "Période_analyse", "priorite_de_conge", "Taux_d_absenteisme"]]
     y = data["Charge_de_travail"]
 
     # Diviser en train et test
@@ -652,6 +648,7 @@ def train_workload_model():
         X, y, test_size=0.2, random_state=42
     )
 
+    # Entraîner le modèle avec les nouvelles caractéristiques
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
@@ -666,8 +663,8 @@ def train_workload_model():
     return model, f"Modèle entraîné avec succès. RMSE: {rmse:.2f}"
 
 
-# Fonction pour prédire la charge de travail
-def predict_workload(annee, periode):
+# Fonction pour prédire la charge de travail (Modèle de Prédiction)
+def predict_workload(annee, periode, taux_d_absenteisme):
     model_path = "workload_model.pkl"
 
     if not os.path.exists(model_path):
@@ -678,9 +675,16 @@ def predict_workload(annee, periode):
         with open(model_path, "rb") as f:
             model = pickle.load(f)
 
-    prediction = model.predict([[annee, periode]])[0]
+    # Assurez-vous de ne passer que les 2 caractéristiques attendues par le modèle
+    prediction = model.predict([[taux_d_absenteisme, periode]])[0]  # 2 caractéristiques : taux_d_absenteisme et periode
 
-    # Déterminer la recommandation
+    return prediction  # Retournons juste la prédiction, pas un tuple
+
+
+
+# Fonction pour scorer la charge de travail (Modèle de Scoring)
+def score_workload(prediction):
+    # Déterminer la recommandation en fonction de la prédiction
     if prediction > 75:
         statut_recommande = "approuve"  # Accepté
     elif 50 <= prediction <= 75:
@@ -688,11 +692,22 @@ def predict_workload(annee, periode):
     else:
         statut_recommande = "rejete"  # Refusé
 
-    return prediction, statut_recommande
+    return statut_recommande
+
+
+# Fonction combinée pour prédiction et scoring
+# Fonction combinée pour prédiction et scoring
+def predict_and_score_workload(annee, periode, taux_d_absenteisme):
+    prediction = predict_workload(annee, periode, taux_d_absenteisme)
+    if prediction is not None:
+        statut_recommande = score_workload(prediction)
+        return prediction, statut_recommande
+    else:
+        return None, "Erreur lors de la prédiction"
+
 
 
 # API pour soumettre une demande de congé avec prédiction de charge de travail
-
 class AddDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]
 
@@ -703,7 +718,7 @@ class AddDemandeCongeView(APIView):
             data = request.data.copy()
             data["employe"] = employe.id
 
-            # Étape 2: Valider les données
+            # Étape 2: Valider les données de la demande de congé
             serializer = DemandeCongeSerializer(data=data)
             if serializer.is_valid():
                 demande = serializer.save()
@@ -711,8 +726,14 @@ class AddDemandeCongeView(APIView):
                 # Étape 3: Prédire la charge de travail
                 annee = demande.date_debut.year
                 periode = demande.date_debut.month
-                prediction, statut_recommande = predict_workload(annee, periode)
 
+                # Utilisation du solde de congé comme taux d'absentéisme
+                taux_d_absenteisme = employe.solde_de_conge / 100  # Exemple de taux d'absentéisme basé sur le solde de congé
+
+                # Appeler la fonction combinée pour obtenir la prédiction et le statut recommandé
+                prediction, statut_recommande = predict_and_score_workload(annee, periode, taux_d_absenteisme)
+
+                # Si la prédiction échoue
                 if prediction is None:
                     return Response(
                         {"error": statut_recommande}, 
@@ -722,9 +743,9 @@ class AddDemandeCongeView(APIView):
                 # Étape 4: Sauvegarder la recommandation
                 Recommandation.objects.create(
                     demande=demande, 
-                    employe=employe,  # Added this line to fix the error
-                    score=prediction, 
-                    statut=statut_recommande
+                    employe=employe,
+                    score=prediction,  # Nous avons la prédiction
+                    statut=statut_recommande  # Et le statut recommandé
                 )
 
                 return Response(
@@ -733,7 +754,7 @@ class AddDemandeCongeView(APIView):
                         "message": "Demande de congé soumise avec succès.",
                         "data": serializer.data,
                         "prediction": prediction,
-                        "recommandation": statut_recommande,
+                        "statut_recommande": statut_recommande,
                     },
                     status=status.HTTP_201_CREATED,
                 )
@@ -752,6 +773,7 @@ class AddDemandeCongeView(APIView):
                 {"status": 403, "message": "Employé non autorisé."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
 
 
 # end pont de recuperes data de recommendations
