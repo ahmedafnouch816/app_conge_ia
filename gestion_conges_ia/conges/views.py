@@ -893,3 +893,11 @@ class DemandesCongeParEmployeView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+############
+
+class ListDemandeCongeView(ListAPIView):
+    queryset = DemandeConge.objects.all()
+    serializer_class = DemandeCongeSerializer

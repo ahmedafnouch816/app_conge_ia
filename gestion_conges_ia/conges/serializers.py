@@ -71,8 +71,3 @@ class DemandeCongeSerializer(serializers.ModelSerializer):
 
 
 
-
-
-#class VerifyAccountSerializer(serializers.Serializer):
-#    email = serializers.EmailField()
-#    otp = serializers.CharField()
