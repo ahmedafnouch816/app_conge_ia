@@ -1,0 +1,109 @@
+{
+    "intents": [
+        {
+            "tag": "horaires_travail",
+            "patterns": ["Quels sont les horaires de travail ?"],
+            "responses": ["Du lundi au vendredi de 08h30 à 17h30 ou de 09h00 à 18h00 avec une pause déjeuner. Pendant le Ramadan, de 09h00 à 16h00."]
+        },
+        {
+            "tag": "retard",
+            "patterns": ["Que se passe-t-il en cas de retard ?"],
+            "responses": ["Tout retard doit être signalé. Les retards répétés peuvent entraîner des sanctions."]
+        },
+        {
+            "tag": "absence",
+            "patterns": ["Comment justifier une absence ?"],
+            "responses": ["Il faut fournir un justificatif (certificat médical, convocation officielle, etc.). Sinon, l’absence est déduite du salaire."]
+        },
+        {
+            "tag": "abandon_poste",
+            "patterns": ["Quand une absence est-elle considérée comme un abandon de poste ?"],
+            "responses": ["Après 24 heures sans justification, une mise en demeure pour licenciement est envoyée."]
+        },
+        {
+            "tag": "conge_paye",
+            "patterns": ["Combien de jours de congé payé ai-je par mois ?"],
+            "responses": ["1,83 jours par mois travaillé."]
+        },
+        {
+            "tag": "prise_conge",
+            "patterns": ["Quand puis-je prendre mes congés accumulés ?"],
+            "responses": ["Un congé accumulé au mois M ne peut être pris que durant le mois M+5."]
+        },
+        {
+            "tag": "conges_exceptionnels",
+            "patterns": ["Quels sont les congés exceptionnels disponibles ?"],
+            "responses": [
+                "Naissance d’un enfant : 2 jours",
+                "Décès du conjoint, parent ou enfant : 3 jours",
+                "Décès d’un frère, grand-parent, petit-enfant : 2 jours",
+                "Mariage du salarié : 3 jours",
+                "Mariage d’un enfant : 1 jour",
+                "Circoncision d’un enfant : 1 jour"
+            ]
+        },
+        {
+            "tag": "conge_exceptionnel_demande",
+            "patterns": ["Comment demander un congé exceptionnel ?"],
+            "responses": ["Un justificatif doit être fourni sous 10 jours."]
+        },
+        {
+            "tag": "maternite",
+            "patterns": ["Quelle est la durée du congé de maternité ?"],
+            "responses": ["30 jours, renouvelables par périodes de 15 jours avec un certificat médical."]
+        },
+        {
+            "tag": "allaitement",
+            "patterns": ["Une femme qui allaite a-t-elle des pauses spéciales ?"],
+            "responses": ["Oui, deux pauses de 30 minutes par jour."]
+        },
+        {
+            "tag": "jours_feries",
+            "patterns": ["Quels sont les jours fériés payés ?"],
+            "responses": [
+                "20 Mars", "1er Mai", "25 Juillet", "17 Décembre",
+                "2 jours pour l’Aïd el Fitr", "2 jours pour l’Aïd el Idha", "1 jour pour le Mouled"
+            ]
+        },
+        {
+            "tag": "travail_jour_ferie",
+            "patterns": ["Que se passe-t-il si je travaille un jour férié ?"],
+            "responses": ["Une compensation est prévue selon les règles de l’entreprise."]
+        },
+        {
+            "tag": "conge_sans_solde",
+            "patterns": ["Puis-je demander un congé sans solde ?"],
+            "responses": ["Oui, avec accord de l’employeur, pour un maximum de 90 jours par an."]
+        },
+        {
+            "tag": "sanctions_disciplinaires",
+            "patterns": ["Quels sont les types de sanctions disciplinaires ?"],
+            "responses": [
+                "1er degré : Avertissement, blâme, mise à pied (max 3 jours).",
+                "2e degré : Mise à pied (jusqu’à 30 jours), rétrogradation, révocation."
+            ]
+        },
+        {
+            "tag": "faute_grave",
+            "patterns": ["Qu’est-ce qu’une faute grave ?"],
+            "responses": [
+                "Vol, divulgation d’informations confidentielles, état d’ébriété au travail, refus injustifié d’exécuter un ordre, violence, etc."
+            ]
+        },
+        {
+            "tag": "decision_sanctions",
+            "patterns": ["Qui décide des sanctions disciplinaires ?"],
+            "responses": ["L’employeur pour les fautes mineures. Le conseil de discipline pour les fautes graves."]
+        },
+        {
+            "tag": "avance_salaire",
+            "patterns": ["Comment fonctionne l’avance sur salaire ?"],
+            "responses": ["Vous pouvez demander une avance de 25% du salaire net du mois précédent, entre le 15 et le 18 du mois."]
+        },
+        {
+            "tag": "tickets_restaurant",
+            "patterns": ["Ai-je droit à des tickets restaurant ?"],
+            "responses": ["Oui, un ticket de 7 dinars par jour travaillé."]
+        }
+    ]
+}

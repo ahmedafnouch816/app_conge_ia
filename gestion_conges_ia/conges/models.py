@@ -104,6 +104,7 @@ class Recommandation(models.Model):
     ]
 
     demande = models.ForeignKey(DemandeConge, on_delete=models.CASCADE, related_name="recommandations")
+    employe = models.ForeignKey(Employe, on_delete=models.CASCADE, related_name="recommandations_employe")  # Changed related_name
     score = models.FloatField()  # Recommendation score
     commentaire = models.TextField(blank=True, null=True)  # Additional recommendation details
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
