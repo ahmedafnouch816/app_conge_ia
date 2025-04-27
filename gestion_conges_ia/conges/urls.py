@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, DemandesCongeParEmployeView, EmployeListAPIView, GetRecommandationView, GetRecommandationsByEmployeView, ListDemandeCongeView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, RegisterApi, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
+from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, EmployeListAPIView, GetRecommandationView, ListDemandeCongeView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, ProfileApi, RegisterApi,AddEmployeeView, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
+from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, DemandesCongeParEmployeView, EmployeListAPIView, GetRecommandationView, GetRecommandationsByEmployeView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, RegisterApi, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
 #from rest_framework_simplejwt import views as jwt_views  # Ajout de cet import
 
 
@@ -8,7 +9,8 @@ urlpatterns = [
     path('api/login', LoginApi.as_view(), name="login"),
     path('api/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('reset-password/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-    
+    path('api/profile/', ProfileApi.as_view(), name='user_profile'),
+
     # api de employee 
     
     #path('api/employees/add/', AddEmployeeView.as_view(), name='add_employee'),
@@ -25,7 +27,7 @@ urlpatterns = [
     path('api/update-conge/update/<int:pk>/', UpdateDemandeCongeView.as_view(), name='update-demande-conge'),
     path('api/demande-conge/delete/<int:pk>/', DeleteDemandeCongeView.as_view(), name='delete_demande_conge'),
     path('api/demande-conge/detail/<int:pk>/', DemandeCongeDetailView.as_view(), name='demande_conge_detail'),
-    path('api/demandes_conge/', ListDemandeCongeView.as_view(), name='list-demande-conge'),
+    path('api/demandes_conge/', ListDemandeCongeView.as_view(), name='list_demandes_conge'),
 
 
 
@@ -35,6 +37,9 @@ urlpatterns = [
  
 
 
+    #path('api/upload/', TrainWorkloadModelView.as_view(), name='upload_workload_file'),
+    
+    #path("api/upload/", PredictWorkloadView.as_view(), name="predict_workload"),
 
 
 ]

@@ -383,18 +383,19 @@ class UpdateEmployeeView(RetrieveUpdateAPIView):
 
 # delete employee
 class DeleteEmployeeView(DestroyAPIView):
-    authentication_classes = [TokenAuthentication]  # Authentification par token
+    authentication_classes = [TokenAuthentication]
     queryset = Employe.objects.all()
     serializer_class = EmployeSerializer
 
     def get_object(self):
-        """Retrieve the employee instance by ID"""
-        return self.get_queryset().get(id=self.kwargs["pk"])
+        pk = self.kwargs.get("pk")
+        try:
+            return self.get_queryset().get(id=pk)
+        except (Employe.DoesNotExist, ValueError, TypeError):
+            return None
 
     def delete(self, request, *args, **kwargs):
-        """Handle the DELETE request to remove the employee"""
-        # Vérifier l'authentification
-        if not request.user.is_authenticated:
+        if not request.user or not request.user.is_authenticated:
             return Response(
                 {
                     "status": 401,
@@ -402,8 +403,15 @@ class DeleteEmployeeView(DestroyAPIView):
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
         employee = self.get_object()
+        if not employee:
+            return Response(
+                {
+                    "status": 404,
+                    "message": "Employé non trouvé.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
         employee.delete()
         return Response(
             {
@@ -412,7 +420,6 @@ class DeleteEmployeeView(DestroyAPIView):
             },
             status=status.HTTP_200_OK,
         )
-
 
 # liste employee
 class EmployeeDetailView(RetrieveAPIView):
@@ -437,7 +444,6 @@ class EmployeListAPIView(ListAPIView):
 
 class UpdateDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]  # Ensuring only authenticated users can update requests
 
     def get_object(self, pk):
         try:
@@ -457,8 +463,8 @@ class UpdateDemandeCongeView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if the authenticated user is the one who created the leave request
-        if demande_conge.employe.user != request.user:
+
+        if demande_conge.employe.user == request.user:
             return Response(
                 {
                     "status": 403,
@@ -467,7 +473,7 @@ class UpdateDemandeCongeView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Prepare the fields to be updated (you can restrict updates to specific fields)
+        # Prepare the fields to be updated
         updated_data = {
             "date_debut": request.data.get("date_debut", demande_conge.date_debut),
             "date_fin": request.data.get("date_fin", demande_conge.date_fin),
@@ -596,7 +602,6 @@ class DemandeCongeDetailView(APIView):
 
 
 ###################################################################################
-# Fonction pour charger les données depuis un fichier Excel
 
 # Fonction pour charger les données depuis un fichier Excel
 def load_data(filepath):
@@ -654,6 +659,7 @@ def train_workload_model():
 
     y_pred = model.predict(X_test)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    
 
     # Sauvegarde du modèle
     model_path = "workload_model.pkl"
@@ -696,7 +702,6 @@ def score_workload(prediction):
 
 
 # Fonction combinée pour prédiction et scoring
-# Fonction combinée pour prédiction et scoring
 def predict_and_score_workload(annee, periode, taux_d_absenteisme):
     prediction = predict_workload(annee, periode, taux_d_absenteisme)
     if prediction is not None:
@@ -707,7 +712,6 @@ def predict_and_score_workload(annee, periode, taux_d_absenteisme):
 
 
 
-# API pour soumettre une demande de congé avec prédiction de charge de travail
 class AddDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]
 
@@ -901,3 +905,34 @@ class DemandesCongeParEmployeView(APIView):
 class ListDemandeCongeView(ListAPIView):
     queryset = DemandeConge.objects.all()
     serializer_class = DemandeCongeSerializer
+    
+    
+    
+    
+
+
+class ProfileApi(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def get(self, request):
+        try:
+            # Get the authenticated user
+            user = request.user
+
+            # Serialize the user data
+            serializer = UserSerializer(user)
+
+            return Response(
+                {
+                    "status": 200,
+                    "message": "User profile retrieved successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"status": 500, "message": "Something went wrong", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
