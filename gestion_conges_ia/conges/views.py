@@ -444,34 +444,31 @@ class EmployeListAPIView(ListAPIView):
 
 class UpdateDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         try:
-            return DemandeConge.objects.get(id=pk)
+            return DemandeConge.objects.get(pk=pk)
         except DemandeConge.DoesNotExist:
             return None
 
     def put(self, request, pk):
-        """Handle the PUT request to update an existing leave request"""
+        """Handles the PUT request to update an existing leave request."""
         demande_conge = self.get_object(pk)
         if not demande_conge:
             return Response(
-                {
-                    "status": 404,
-                    "message": "Demande de congé non trouvée.",
-                },
+                {"status": 404, "message": "Demande de congé non trouvée."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-
-      #  if demande_conge.employe.user == request.user:
-      #      return Response(
-      #          {
-      #              "status": 403,
-      #              "message": "Vous ne pouvez pas modifier cette demande de congé.",
-      #          },
-      #          status=status.HTTP_403_FORBIDDEN,
-      #      )
+        # Authorization check:
+      # if demande_conge.employe.user == request.user:
+      #     # Optional: Allow admin users to update any request
+      #     if not request.user.is_superuser:
+      #         return Response(
+      #             {"status": 403, "message": "Vous n'êtes pas autorisé à modifier cette demande de congé."},
+      #             status=status.HTTP_403_FORBIDDEN,
+      #         )
 
         # Prepare the fields to be updated
         updated_data = {
@@ -481,7 +478,7 @@ class UpdateDemandeCongeView(APIView):
             "statut": request.data.get("statut", demande_conge.statut),
         }
 
-        # Validate and update only those fields
+        # Validate and update only the provided fields
         serializer = DemandeCongeSerializer(
             demande_conge, data=updated_data, partial=True
         )
@@ -498,15 +495,10 @@ class UpdateDemandeCongeView(APIView):
             )
 
         return Response(
-            {
-                "status": 400,
-                "message": "Données invalides.",
-                "errors": serializer.errors,
-            },
+            {"status": 400, "message": "Données invalides.", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-
+        
 class DeleteDemandeCongeView(APIView):
     authentication_classes = [TokenAuthentication]  # Authentication via Token
     # permission_classes = [IsAuthenticated]  # Only authenticated users can delete

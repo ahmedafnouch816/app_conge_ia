@@ -59,7 +59,7 @@ model.to(device)
 optimizer = AdamW(model.parameters(), lr=2e-5)
 
 # Boucle d'entraînement
-epochs = 10
+epochs = 1
 for epoch in range(epochs):
     model.train()
     total_loss = 0
