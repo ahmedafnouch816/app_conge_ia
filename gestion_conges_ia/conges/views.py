@@ -464,14 +464,14 @@ class UpdateDemandeCongeView(APIView):
             )
 
 
-        if demande_conge.employe.user == request.user:
-            return Response(
-                {
-                    "status": 403,
-                    "message": "Vous ne pouvez pas modifier cette demande de congé.",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+      #  if demande_conge.employe.user == request.user:
+      #      return Response(
+      #          {
+      #              "status": 403,
+      #              "message": "Vous ne pouvez pas modifier cette demande de congé.",
+      #          },
+      #          status=status.HTTP_403_FORBIDDEN,
+      #      )
 
         # Prepare the fields to be updated
         updated_data = {
