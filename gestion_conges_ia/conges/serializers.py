@@ -1,11 +1,27 @@
 from rest_framework import serializers
 from .models import *
+# serializers.py
+from .models import Employe
+
+
 
 class EmployeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employe
         fields = ['nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
 
+class EmployeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employe
+        fields = ['id','nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
+        extra_kwargs = {
+            'solde_de_conge': {'required': True}
+        }
+
+class DemandeCongeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DemandeConge
+        fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut']
 
 
 # User Serializer
@@ -51,36 +67,8 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField()
     
 
-# serializers.py
-from rest_framework import serializers
-from .models import Employe
-
-class EmployeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Employe
-        fields = ['id','nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
-        extra_kwargs = {
-            'solde_de_conge': {'required': True}
-        }
-#class EmployeSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Employe
-#        fields = ['nom', 'prenom', 'departement', 'poste', 'solde_de_conge']
-#        extra_kwargs = {
-#            'solde_de_conge': {'required': True}
-#        }
-
-#####################
-
-class DemandeCongeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DemandeConge
-        fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut']
 
 
 
 
 
-#class VerifyAccountSerializer(serializers.Serializer):
-#    email = serializers.EmailField()
-#    otp = serializers.CharField()
