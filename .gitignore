@@ -1,18 +1,10 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-.env/
-
-# Ignore Python cache files
-__pycache__/
-*.py[cod]
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
+.env/
 build/
 develop-eggs/
 dist/
@@ -27,57 +19,71 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/
+.env
+.venv
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Django stuff:
+# Django
 *.log
+local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/workload_files/
-
-# PyInstaller
-*.manifest
-*.spec
-
-debug.log
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
+media/
+staticfiles/
+*.pot
+*.mo
+*.pyc
 .coverage
-.coverage.*
-.cache
-nosetests.xml
+htmlcov/
+.pytest_cache/
+.tox/
 coverage.xml
 *.cover
-.hypothesis/
-.pytest_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# mypy
-.mypy_cache/
-.dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# VS Code
-.vscode/
-
-# System files
-Thumbs.db
-.DS_Store
-
-# Model files
+# ML Models
 *.pkl
+# Except for production models that should be versioned
+!workload_model.pkl
 
-# Ignore frontend
-/frontend_conge_ai/
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+.vs/
+*.code-workspace
+
+# Database files
+*.sql
+*.sqlite3
+
+# Backup files
+*.bak
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Media
+/media/
+/static/
+workload_files/
+certificat/
+
+# Sensitive files
+.env
+credentials.json
+client_secret.json
+
+# Migration files
+# Uncomment the next line if you want to ignore migration files
+# */migrations/*.py
+# !*/migrations/__init__.py
