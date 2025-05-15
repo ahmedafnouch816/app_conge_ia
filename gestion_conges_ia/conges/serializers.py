@@ -77,9 +77,23 @@ class DemandeCongeSerializer(serializers.ModelSerializer):
         model = DemandeConge
         fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut']
 
-
-
-
+class LeaveAccrualRecordSerializer(serializers.ModelSerializer):
+    month_name = serializers.SerializerMethodField()
+    employe_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = LeaveAccrualRecord
+        fields = ['id', 'employe', 'employe_name', 'month', 'month_name', 'year', 
+                 'workable_days', 'days_worked', 'leave_accrued', 'is_finalized', 
+                 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_month_name(self, obj):
+        import calendar
+        return calendar.month_name[obj.month]
+    
+    def get_employe_name(self, obj):
+        return f"{obj.employe.prenom} {obj.employe.nom}"
 
 #class VerifyAccountSerializer(serializers.Serializer):
 #    email = serializers.EmailField()

@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+import calendar
 
 from .ml_utils import MODEL_PATH
 from .manager import UserManager
@@ -171,3 +173,25 @@ class EmployeeWorkloadFile(models.Model):
 #        except Exception as e:
 #            print(f"Erreur lors de la prédiction : {str(e)}")
 #            return None
+
+
+class LeaveAccrualRecord(models.Model):
+    """
+    Model to track monthly leave accruals for employees.
+    """
+    employe = models.ForeignKey('Employe', on_delete=models.CASCADE, related_name='leave_accruals')
+    month = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    year = models.IntegerField(validators=[MinValueValidator(2000), MaxValueValidator(2100)])
+    workable_days = models.IntegerField(help_text="Number of workable days in the month (excluding Sundays)")
+    days_worked = models.IntegerField(help_text="Number of days actually worked by the employee")
+    leave_accrued = models.FloatField(help_text="Leave accrued for this month (in days)")
+    is_finalized = models.BooleanField(default=False, help_text="Whether this accrual has been finalized and added to the employee's balance")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('employe', 'month', 'year')
+        ordering = ['-year', '-month']
+
+    def __str__(self):
+        return f"{self.employe} - {calendar.month_name[self.month]} {self.year}: {self.leave_accrued} days accrued"

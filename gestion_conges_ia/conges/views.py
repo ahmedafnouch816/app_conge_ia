@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from .serializers import (
     DemandeCongeSerializer,
@@ -7,13 +7,14 @@ from .serializers import (
     User,
     UserSerializer,
     LoginSerializer,
+    LeaveAccrualRecordSerializer,
 )
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from .models import DemandeConge, Employe, Recommandation
-from rest_framework.generics import DestroyAPIView, RetrieveAPIView , ListAPIView
+from .models import DemandeConge, Employe, Recommandation, LeaveAccrualRecord
+from rest_framework.generics import DestroyAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.authtoken.models import Token  # Add this import
 from django.contrib.auth.models import User  # Import the User model
 from django.contrib.auth import get_user_model
@@ -48,6 +49,15 @@ from rest_framework import generics
 from rest_framework.serializers import ModelSerializer
 from django.db import transaction, IntegrityError
 
+from .models import LeaveAccrualRecord
+from .serializers import LeaveAccrualRecordSerializer
+from .utils.leave_accrual import update_or_create_accrual_record
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, generics
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 something_went_wrong = ("something went wrong",)
 User = get_user_model()
@@ -935,4 +945,149 @@ class ProfileApi(APIView):
             return Response(
                 {"status": 500, "message": "Something went wrong", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+# Leave Accrual Views
+class LeaveAccrualListView(ListAPIView):
+    """
+    API view to list all leave accrual records.
+    Can be filtered by employee, month, and year.
+    """
+    serializer_class = LeaveAccrualRecordSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = LeaveAccrualRecord.objects.all()
+        
+        # Filter by employee if specified
+        employee_id = self.request.query_params.get('employee_id')
+        if employee_id:
+            queryset = queryset.filter(employe_id=employee_id)
+        
+        # Filter by month if specified
+        month = self.request.query_params.get('month')
+        if month:
+            queryset = queryset.filter(month=month)
+        
+        # Filter by year if specified
+        year = self.request.query_params.get('year')
+        if year:
+            queryset = queryset.filter(year=year)
+            
+        # Filter by is_finalized if specified
+        is_finalized = self.request.query_params.get('is_finalized')
+        if is_finalized is not None:
+            is_finalized = is_finalized.lower() == 'true'
+            queryset = queryset.filter(is_finalized=is_finalized)
+        
+        return queryset
+
+
+class LeaveAccrualDetailView(RetrieveAPIView):
+    """
+    API view to retrieve a specific leave accrual record.
+    """
+    queryset = LeaveAccrualRecord.objects.all()
+    serializer_class = LeaveAccrualRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CalculateLeaveAccrualView(APIView):
+    """
+    API view to calculate leave accrual for an employee for a specific month.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from conges.utils.leave_accrual import update_or_create_accrual_record
+        
+        employee_id = request.data.get('employee_id')
+        month = request.data.get('month')
+        year = request.data.get('year')
+        days_worked = request.data.get('days_worked')  # Optional
+        finalize = request.data.get('finalize', False)
+        
+        # Validate required fields
+        if not all([employee_id, month, year]):
+            return Response(
+                {"error": "employee_id, month, and year are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Get the employee
+            employe = Employe.objects.get(pk=employee_id)
+            
+            # Calculate and save accrual
+            record = update_or_create_accrual_record(
+                employe=employe,
+                year=year,
+                month=month,
+                days_worked=days_worked,
+                is_finalized=finalize
+            )
+            
+            # Serialize and return the record
+            serializer = LeaveAccrualRecordSerializer(record)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Employe.DoesNotExist:
+            return Response(
+                {"error": f"Employee with ID {employee_id} does not exist"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class FinalizeLeaveAccrualView(APIView):
+    """
+    API view to finalize leave accrual records and add them to employee balances.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from django.db import transaction
+        
+        accrual_id = request.data.get('accrual_id')
+        
+        try:
+            # Get the accrual record
+            record = LeaveAccrualRecord.objects.get(pk=accrual_id)
+            
+            # Check if already finalized
+            if record.is_finalized:
+                return Response(
+                    {"error": "Accrual record already finalized"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Finalize the record
+            with transaction.atomic():
+                # Update employee's leave balance
+                record.employe.solde_de_conge += record.leave_accrued
+                record.employe.save()
+                
+                # Mark as finalized
+                record.is_finalized = True
+                record.save()
+            
+            # Serialize and return the record
+            serializer = LeaveAccrualRecordSerializer(record)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except LeaveAccrualRecord.DoesNotExist:
+            return Response(
+                {"error": f"Accrual record with ID {accrual_id} does not exist"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

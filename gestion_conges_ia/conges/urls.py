@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, EmployeListAPIView, GetRecommandationView, ListDemandeCongeView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, ProfileApi, RegisterApi,AddEmployeeView, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
 from .views import   AddDemandeCongeView, DeleteDemandeCongeView, DemandeCongeDetailView, DemandesCongeParEmployeView, EmployeListAPIView, GetRecommandationView, GetRecommandationsByEmployeView, LoginApi, PasswordResetConfirmView, PasswordResetRequestView, RegisterApi, UpdateDemandeCongeView,UpdateEmployeeView,DeleteEmployeeView,EmployeeDetailView
+# Import the leave accrual views
+from .views import LeaveAccrualListView, LeaveAccrualDetailView, CalculateLeaveAccrualView, FinalizeLeaveAccrualView
 #from rest_framework_simplejwt import views as jwt_views  # Ajout de cet import
 
 
@@ -41,5 +43,9 @@ urlpatterns = [
     
     #path("api/upload/", PredictWorkloadView.as_view(), name="predict_workload"),
 
-
+    # Leave Accrual API Endpoints
+    path('api/leave-accruals/', LeaveAccrualListView.as_view(), name='leave_accrual_list'),
+    path('api/leave-accruals/<int:pk>/', LeaveAccrualDetailView.as_view(), name='leave_accrual_detail'),
+    path('api/leave-accruals/calculate/', CalculateLeaveAccrualView.as_view(), name='calculate_leave_accrual'),
+    path('api/leave-accruals/finalize/', FinalizeLeaveAccrualView.as_view(), name='finalize_leave_accrual'),
 ]
