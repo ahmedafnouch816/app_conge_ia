@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
 # C extensions
 *.so
 
