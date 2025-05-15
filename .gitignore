@@ -1,0 +1,78 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.env/
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django stuff:
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/workload_files/
+
+# PyInstaller
+*.manifest
+*.spec
+
+debug.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VS Code
+.vscode/
+
+# System files
+Thumbs.db
+.DS_Store
+
+# Model files
+*.pkl
+
+# Ignore frontend
+/frontend_conge_ai/
