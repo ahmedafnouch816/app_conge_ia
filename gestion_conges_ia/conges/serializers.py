@@ -26,16 +26,34 @@ class DemandeCongeSerializer(serializers.ModelSerializer):
 
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
-    departement = serializers.CharField(write_only=True, required=False)  
-    poste = serializers.CharField(write_only=True, required=False)  
-    solde_de_conge = serializers.IntegerField(write_only=True, required=False, default=0)  
+    # Write-only for creation
+    departement = serializers.CharField(write_only=True, required=False)
+    poste = serializers.CharField(write_only=True, required=False)
+    solde_de_conge = serializers.IntegerField(write_only=True, required=False, default=0)
+
+    # Read-only from related Employe model
+    employe_departement = serializers.CharField(source='profil_employe.departement', read_only=True)
+    employe_poste = serializers.CharField(source='profil_employe.poste', read_only=True)
+    employe_solde_de_conge = serializers.IntegerField(source='profil_employe.solde_de_conge', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id','email','password','first_name','last_name','role']
-        fields = ['email', 'password', 'first_name', 'last_name', 'role', 'departement', 'poste', 'solde_de_conge']
+        fields = [
+            'id',
+            'email',
+            'password',
+            'first_name',
+            'last_name',
+            'role',
+            'departement',         # write-only
+            'poste',               # write-only
+            'solde_de_conge',      # write-only
+            'employe_departement', # read-only
+            'employe_poste',       # read-only
+            'employe_solde_de_conge', # read-only
+        ]
         extra_kwargs = {
-            'password': {'write_only': True},  # Ensure password is write-only
+            'password': {'write_only': True},
             'role': {'required': True}
         }
 
@@ -44,13 +62,11 @@ class UserSerializer(serializers.ModelSerializer):
         poste = validated_data.pop('poste', "")
         solde_de_conge = validated_data.pop('solde_de_conge', 0)
 
-        # ✅ Correctly hash the password
         password = validated_data.pop('password')
         user = User(**validated_data)
-        user.set_password(password)  # Hash password before saving
+        user.set_password(password)
         user.save()
 
-        # ✅ Ensure Employe object is created only once
         Employe.objects.create(
             user=user,
             nom=user.first_name,
