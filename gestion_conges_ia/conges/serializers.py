@@ -21,7 +21,7 @@ class EmployeSerializer(serializers.ModelSerializer):
 class DemandeCongeSerializer(serializers.ModelSerializer):
     class Meta:
         model = DemandeConge
-        fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut']
+        fields = ['id', 'employe', 'date_debut', 'date_fin', 'type_conge', 'statut', 'file']
 
 
 # User Serializer
