@@ -463,6 +463,16 @@ class UpdateDemandeCongeView(APIView):
 
     def put(self, request, pk):
         """Handle the PUT request to update an existing leave request"""
+        # Check if user is authenticated
+        if not request.user or not request.user.is_authenticated:
+            return Response(
+                {
+                    "status": 401,
+                    "message": "Authentification requise.",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+            
         demande_conge = self.get_object(pk)
         if not demande_conge:
             return Response(
@@ -474,7 +484,7 @@ class UpdateDemandeCongeView(APIView):
             )
 
 
-        if demande_conge.employe.user == request.user:
+        if demande_conge.employe.user != request.user:
             return Response(
                 {
                     "status": 403,
@@ -913,6 +923,7 @@ class DemandesCongeParEmployeView(APIView):
 ############
 
 class ListDemandeCongeView(ListAPIView):
+    authentication_classes = [TokenAuthentication]  # Add token authentication
     queryset = DemandeConge.objects.all()
     serializer_class = DemandeCongeSerializer
     
@@ -955,7 +966,6 @@ class LeaveAccrualListView(ListAPIView):
     """
     serializer_class = LeaveAccrualRecordSerializer
     permission_classes = [IsAuthenticated]
-    
     def get_queryset(self):
         queryset = LeaveAccrualRecord.objects.all()
         
@@ -976,9 +986,12 @@ class LeaveAccrualListView(ListAPIView):
             
         # Filter by is_finalized if specified
         is_finalized = self.request.query_params.get('is_finalized')
-        if is_finalized is not None:
-            is_finalized = is_finalized.lower() == 'true'
-            queryset = queryset.filter(is_finalized=is_finalized)
+        if is_finalized is not None and is_finalized != '':
+            # Convert string value to boolean
+            if is_finalized.lower() == 'true':
+                queryset = queryset.filter(is_finalized=True)
+            elif is_finalized.lower() == 'false':
+                queryset = queryset.filter(is_finalized=False)
         
         return queryset
 
